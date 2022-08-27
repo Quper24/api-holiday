@@ -7,7 +7,7 @@ const DB_FILE = process.env.DB_FILE || "./db.json";
 // номер порта, на котором будет запущен сервер
 const PORT = process.env.PORT || 3000;
 // префикс URI для всех методов приложения
-const URI_PREFIX = "/api/goods";
+const URI_PREFIX = "/api";
 
 /**
  * Класс ошибки, используется для отправки ответа с определённым кодом и описанием ошибки
@@ -202,15 +202,10 @@ module.exports = server = createServer(async (req, res) => {
       );
       console.log("Нажмите CTRL+C, чтобы остановить сервер");
       console.log("Доступные методы:");
-      console.log(`GET ${URI_PREFIX} - получить список товаров`);
-      console.log(`GET ${URI_PREFIX}/{id} - получить товар по его ID`);
-      console.log(`GET ${URI_PREFIX}?{search=""} - найти товар по названию`);
-      console.log(
-        `GET ${URI_PREFIX}?{category=""} - получить товар по его категории`
-      );
-      console.log(
-        `GET ${URI_PREFIX}?{list="{id},{id}"} - получить товары по id`
-      );
+      console.log(`GET ${URI_PREFIX}/{title_holiday} - получить случайное поздравление к празднику`);
+      console.log(`GET ${URI_PREFIX}/{id} - получить поздравление по его ID`);
+      console.log(`GET ${URI_PREFIX} - получить список праздников`);
+
     }
   })
   // ...и вызываем запуск сервера на указанном порту
