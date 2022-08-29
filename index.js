@@ -142,14 +142,14 @@ module.exports = server = createServer(async (req, res) => {
         return getList();
       }
 
-      const holiday = getList().find((item) => item === uri.substring(1));
+      const holiday = Object.keys(getList()).find((item) => item === uri.substring(1));
 
       if (holiday) {
         return getRandomItem(holiday);
       }
 
       if (uri.includes("/text/")) {
-        const holiday = getList().find((item) => item === uri.substring(6));
+        const holiday = Object.keys(getList()).find((item) => item === uri.substring(6));
         if (holiday) {
           return getHolidayText(holiday);
         } else {
@@ -159,7 +159,7 @@ module.exports = server = createServer(async (req, res) => {
       }
 
       if (uri.includes("/image/")) {
-        const holiday = getList().find((item) => item === uri.substring(7));
+        const holiday = Object.keys(getList()).find((item) => item === uri.substring(7));
         if (holiday) {
           return getHolidayImg(holiday);
         } else {
