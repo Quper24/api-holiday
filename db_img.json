@@ -1,5 +1,5 @@
 {
-  "birthday-women": [
+  "birthdaywomen": [
     "3f7d8a2b.jpg",
     "4c709ab8.jpg",
     "6e1df48f.jpg",
@@ -8,14 +8,14 @@
     "68b85d0c.jpg",
     "116f7332.jpg",
     "400d4168.jpg",
-    "1915d682.jpg",
+    "1915d682.jpg"
   ],
-  "birthday-men": [
+  "birthdaymen": [
     "3f7d8a2b.jpg",
     "68fe92e2.jpg",
     "1915d682.jpg",
     "4421cd74.jpg",
-    "40717d5c.jpg",
+    "40717d5c.jpg"
   ],
   "womenday": [
     "4c709ab8.jpg",
@@ -24,12 +24,12 @@
     "17fb9b68.jpg",
     "68b85d0c.jpg",
     "116f7332.jpg",
-    "400d4168.jpg",
+    "400d4168.jpg"
   ],
   "programmingday": [
     "3f7d8a2b.jpg",
     "4421cd74.jpg",
-    "40717d5c.jpg",
+    "40717d5c.jpg"
   ],
   "knowledgeday": [
     "4c709ab8.jpg",
@@ -48,7 +48,15 @@
     "17fb9b68.jpg",
     "68b85d0c.jpg",
     "116f7332.jpg",
-    "400d4168.jpg",
+    "400d4168.jpg"
   ],
-  "newyear": []
+  "newyear": [
+    "caa6f2bc.jpg",
+    "ad7c77ef.jpg",
+    "a83031b3.jpg",
+    "a989f28e.jpg",
+    "230fc3d0.jpg",
+    "8ed7da2c.jpg",
+    "64ca2c01.jpg"
+  ]
 }

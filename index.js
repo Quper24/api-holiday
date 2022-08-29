@@ -3,7 +3,9 @@ const { readFileSync } = require("fs");
 const { createServer } = require("http");
 
 // файл для базы данных
-const DB_FILE = process.env.DB_FILE || "./db.json";
+const DB_TEXT = process.env.DB_TEXT || "./db_text.json";
+const DB_IMG = process.env.DB_IMG || "./db_img.json";
+const DB_HOLIDAY = process.env.DB_HOLIDAY || "./db_holiday.json";
 // номер порта, на котором будет запущен сервер
 const PORT = process.env.PORT || 3000;
 // префикс URI для всех методов приложения
@@ -20,109 +22,69 @@ class ApiError extends Error {
   }
 }
 
-/**
- * Фильтрует список товаров по дисконту и возвращает случайных 16 товаров
- * @param {[{discountPrice: number}]} [goods] - товары
- * @returns {{ id: string, title: string, price: number, discountPrice: number, description: Object[],
- * category: string, image: string}[]} Массив товаров
- */
-
-const pagination = (goods, page, count, sort) => {
-  const sortGoods = goods.sort((a, b) => {
-    if (sort.value === "price") {
-      if (sort.direction === "up") {
-        return a.price > b.price ? 1 : -1;
-      }
-      return a.price > b.price ? -1 : 1;
-    }
-
-    if (sort.direction === "up") {
-      return a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1;
-    }
-    return a.title.toLowerCase() > b.title.toLowerCase() ? -1 : 1;
-  });
-
-  let end = count * page;
-  let start = page === 1 ? 0 : end - count;
-
-  const pages = Math.ceil(sortGoods.length / count);
-
-  return {
-    goods: sortGoods.slice(start, end),
-    page,
-    pages,
-  };
-};
-
-/**
- * Возвращает список товаров из базы данных
- * @param {{ search: string, category: string, list: string }} [params] - Поисковая строка
- * @returns {{ id: string, title: string, price: number, discountPrice: number, description: Object[],
- * category: string, image: string}[]} Массив товаров
- */
-function getGoodsList(params = {}) {
-  console.log("params: ", params);
-  const page = +params.page || 1;
-  const paginationCount = params.count || 12;
-  const sort = {
-    value: params.sort || "title",
-    direction: params.direction || "up",
-  };
-  const goods = JSON.parse(readFileSync(DB_FILE) || "[]");
-
-  if (params.search) {
-    const search = params.search.trim().toLowerCase();
-    return goods.filter((item) => item.title.toLowerCase().includes(search));
-  }
-
-  if (params.list) {
-    const list = params.list.trim().toLowerCase();
-    return goods.filter((item) => list.includes(item.id));
-  }
-
-  // фильрация
-  let data = goods;
-
-  if (params.category) {
-    const category = params.category.trim().toLowerCase();
-    const regExp = new RegExp(`^${category}$`);
-    data = data.filter((item) => regExp.test(item.category.toLowerCase()));
-  }
-
-  if (params.color) {
-    data = data.filter((item) => params.color?.includes(item.color));
-  }
-
-  if (params.minprice) {
-    data = data.filter((item) => params.minprice <= item.price);
-  }
-
-  if (params.maxprice) {
-    data = data.filter((item) => params.maxprice >= item.price);
-  }
-
-  if (params.mindisplay) {
-    data = data.filter((item) => params.mindisplay <= item.display);
-  }
-
-  if (params.maxdisplay) {
-    data = data.filter((item) => params.maxdisplay >= item.display);
-  }
-
-  return pagination(data, page, paginationCount, sort);
+function arrayRandElement(arr) {
+  const rand = Math.floor(Math.random() * arr.length);
+  return arr[rand];
 }
 
-/**
- * Возвращает объект товара по его ID
- * @param {string} itemId - ID товара
- * @throws {ApiError} Товар с таким ID не найден (statusCode 404)
- * @returns {{ id: string, title: string, price: number, discountPrice: number, description: Object[],
- * category: string, image: string}} Объект клиента
- */
-function getItems(itemId) {
-  const goods = JSON.parse(readFileSync(DB_FILE) || "[]");
-  const item = goods.find(({ id }) => id === itemId);
-  console.log(itemId);
+function getList() {
+  return JSON.parse(readFileSync(DB_HOLIDAY) || "[]");
+}
+
+function getHolidayText(cat) {
+  const textObj = JSON.parse(readFileSync(DB_TEXT) || "[]");
+  return arrayRandElement(textObj[cat]);
+}
+
+function getHolidayImg(cat) {
+  const imageObj = JSON.parse(readFileSync(DB_IMG) || "[]");
+  return `http://localhost:${PORT}/img/${arrayRandElement(imageObj[cat])}`;
+}
+
+function getRandomItem(cat) {
+  return { ...getHolidayText(cat), img: getHolidayImg(cat) };
+}
+
+function getTextId(itemId) {
+  const textObj = JSON.parse(readFileSync(DB_TEXT) || "[]");
+  let item = null;
+
+  for (const key in textObj) {
+    if (Object.hasOwnProperty.call(textObj, key)) {
+      const arr = textObj[key];
+      for (const obj of arr) {
+        if (obj.id === itemId) {
+          item = obj;
+          break;
+        }
+      }
+
+      if (item) break;
+    }
+  }
+
+  if (!item) throw new ApiError(404, { message: "Item Not Found" });
+  return item;
+}
+
+function getImgId(itemId) {
+  const imgObj = JSON.parse(readFileSync(DB_IMG) || "[]");
+  let item = null;
+
+  for (const key in imgObj) {
+    if (Object.hasOwnProperty.call(imgObj, key)) {
+      const arr = imgObj[key];
+      for (const str of arr) {
+        if (str.includes(itemId)) {
+          item = str;
+          break;
+        }
+      }
+
+      if (item) break;
+    }
+  }
+
   if (!item) throw new ApiError(404, { message: "Item Not Found" });
   return item;
 }
@@ -130,7 +92,14 @@ function getItems(itemId) {
 // создаём HTTP сервер, переданная функция будет реагировать на все запросы к нему
 module.exports = server = createServer(async (req, res) => {
   // req - объект с информацией о запросе, res - объект для управления отправляемым ответом
-
+  if  (req.url.includes('img')) {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "image/jpeg");
+    require("fs").readFile(`.${req.url}`, (err, image) => {
+      res.end(image);
+    });
+    return;
+  }
   // этот заголовок ответа указывает, что тело ответа будет в JSON формате
   res.setHeader("Content-Type", "application/json");
 
@@ -155,7 +124,7 @@ module.exports = server = createServer(async (req, res) => {
   }
 
   // убираем из запроса префикс URI, разбиваем его на путь и параметры
-  const [uri, query] = req.url.substr(URI_PREFIX.length).split("?");
+  const [uri, query] = req.url.substring(URI_PREFIX.length).split("?");
   const queryParams = {};
   // параметры могут отсутствовать вообще или иметь вид a=b&b=c
   // во втором случае наполняем объект queryParams { a: 'b', b: 'c' }
@@ -170,13 +139,33 @@ module.exports = server = createServer(async (req, res) => {
     // обрабатываем запрос и формируем тело ответа
     const body = await (async () => {
       if (uri === "" || uri === "/") {
-        // /api/goods
-        if (req.method === "GET") return getGoodsList(queryParams);
-      } else {
-        // /api/goods/{id}
-        // параметр {id} из URI запроса
-        const itemId = uri.substr(1);
-        if (req.method === "GET") return getItems(itemId);
+        return getList();
+      }
+
+      const holiday = getList().find((item) => item === uri.substring(1));
+
+      if (holiday) {
+        return getRandomItem(holiday);
+      }
+
+      if (uri.includes("/text/")) {
+        const holiday = getList().find((item) => item === uri.substring(6));
+        if (holiday) {
+          return getHolidayText(holiday);
+        } else {
+          const itemId = uri.substring(6);
+          return getTextId(itemId);
+        }
+      }
+
+      if (uri.includes("/image/")) {
+        const holiday = getList().find((item) => item === uri.substring(7));
+        if (holiday) {
+          return getHolidayImg(holiday);
+        } else {
+          const itemId = uri.substring(7);
+          return getImgId(itemId);
+        }
       }
       return null;
     })();
@@ -202,10 +191,20 @@ module.exports = server = createServer(async (req, res) => {
       );
       console.log("Нажмите CTRL+C, чтобы остановить сервер");
       console.log("Доступные методы:");
-      console.log(`GET ${URI_PREFIX}/{title_holiday} - получить случайное поздравление к празднику`);
-      console.log(`GET ${URI_PREFIX}/{id} - получить поздравление по его ID`);
       console.log(`GET ${URI_PREFIX} - получить список праздников`);
-
+      console.log(
+        `GET ${URI_PREFIX}/{title_holiday} - получить случайное поздравление к празднику (текст и картинку)`
+      );
+      console.log(
+        `GET ${URI_PREFIX}/text/{title_holiday} - получить случайный текст к празднику`
+      );
+      console.log(
+        `GET ${URI_PREFIX}/text/{id} - получить поздравление по его ID`
+      );
+      console.log(
+        `GET ${URI_PREFIX}/image/{title_holiday} - получить случайное изображение к празднику`
+      );
+      console.log(`GET ${URI_PREFIX}/{id} - получить поздравление по его ID`);
     }
   })
   // ...и вызываем запуск сервера на указанном порту
