@@ -2,6 +2,7 @@
 const { readFileSync } = require("fs");
 const { createServer } = require("http");
 
+
 // файл для базы данных
 const DB_TEXT = process.env.DB_TEXT || "./db_text.json";
 const DB_IMG = process.env.DB_IMG || "./db_img.json";
@@ -38,11 +39,15 @@ function getHolidayText(cat) {
 
 function getHolidayImg(cat) {
   const imageObj = JSON.parse(readFileSync(DB_IMG) || "[]");
-  return `http://localhost:${PORT}/img/${arrayRandElement(imageObj[cat])}`;
+  const img = arrayRandElement(imageObj[cat]);
+  return {
+    idImg: img.slice(0, -4),
+    urlImg: `http://localhost:3000/img/${img}`,
+  }
 }
 
 function getRandomItem(cat) {
-  return { ...getHolidayText(cat), img: getHolidayImg(cat) };
+  return { ...getHolidayText(cat), ...getHolidayImg(cat) };
 }
 
 function getTextId(itemId) {
@@ -53,7 +58,7 @@ function getTextId(itemId) {
     if (Object.hasOwnProperty.call(textObj, key)) {
       const arr = textObj[key];
       for (const obj of arr) {
-        if (obj.id === itemId) {
+        if (obj.idText === itemId) {
           item = obj;
           break;
         }
@@ -69,28 +74,32 @@ function getTextId(itemId) {
 
 function getImgId(itemId) {
   const imgObj = JSON.parse(readFileSync(DB_IMG) || "[]");
-  let item = null;
+  let img = null;
 
   for (const key in imgObj) {
     if (Object.hasOwnProperty.call(imgObj, key)) {
       const arr = imgObj[key];
       for (const str of arr) {
         if (str.includes(itemId)) {
-          item = str;
+          img = str;
           break;
         }
       }
 
-      if (item) break;
+      if (img) break;
     }
   }
 
-  if (!item) throw new ApiError(404, { message: "Item Not Found" });
-  return item;
+  if (!img) throw new ApiError(404, { message: "Item Not Found" });
+  return {
+    idImg: img.slice(0, -4),
+    urlImg: `http://localhost:${PORT}/img/${img}`,
+  }
 }
 
 // создаём HTTP сервер, переданная функция будет реагировать на все запросы к нему
 module.exports = server = createServer(async (req, res) => {
+
   // req - объект с информацией о запросе, res - объект для управления отправляемым ответом
   if  (req.url.includes('img')) {
     res.statusCode = 200;
